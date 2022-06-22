@@ -1,0 +1,231 @@
+package eu.pregatire.main;
+
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.SecureRandom;
+import eu.pregatire.PBKDF2Function.PBKDF2Function;
+import eu.pregatire.aes.cbc.AES_CBC_DECRIPTION;
+import eu.pregatire.aes.cbc.AES_CBC_ENCRIPTION;
+import eu.pregatire.aes.ecb.AES_ECB_DECRIPTION;
+import eu.pregatire.aes.ecb.AES_ECB_ENCRIPTION;
+import eu.pregatire.des.DES_ENCRIPTION;
+import eu.pregatire.hash.HashAlg;
+import eu.pregatire.hmac.HashMACFunction;
+import eu.pregatire.pbe.PBESpecs;
+import eu.pregatire.pbe.PBE_DECRIPTION;
+import eu.pregatire.pbe.PBE_ENCRIPTION;
+import eu.pregatire.prov.Providers;
+import eu.pregatire.rsa.KeyStoreManager;
+import eu.pregatire.util.Util;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+
+public class MainApplication {
+
+	public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException, IOException,
+			InvalidKeySpecException, InvalidKeyException, UnrecoverableKeyException, KeyStoreException,
+			CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException,
+			SignatureException, InvalidAlgorithmParameterException {
+		// FOR HASHING:
+		System.out.println(
+				"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		System.out.println("                                      HASHING FUNCTIONS");
+		System.out.println(
+				"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		doHASH();
+		System.out.println(
+				"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		System.out.println("                                      AES + PBE FUNCTIONS");
+		System.out.println(
+				"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		testPBE();
+		System.out.println(
+				"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		System.out.println("                                      RSA FUNCTIONS");
+		System.out.println(
+				"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		testRSA();
+		System.out.println(
+				"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		System.out.println("                                      DES FUNCTIONS");
+		System.out.println(
+				"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		testDES();
+	}
+
+	public static void doHASH() throws NoSuchAlgorithmException, NoSuchProviderException, IOException,
+			InvalidKeySpecException, InvalidKeyException {
+		/*
+		 * INITIATE PROVIDERS
+		 */
+		final String BCProvider = "BC";
+		final String StandardProvider = "SUN";
+		// LOAD PROVIDERS
+		Providers.loadBCProvider(BCProvider);
+		Providers.checkProvider(StandardProvider);
+		Providers.checkProvider("SunRsaSign");
+		Providers.checkProvider("SUN");
+		Providers.checkProvider("SunJCE");
+
+		// Message Digest
+		byte[] mdValue = HashAlg.getHash("message.txt", BCProvider, "SHA-256");
+		//byte[] mdValue2 = HashAlg.getHash("message.txt", BCProvider, "MD5");
+		byte[] mdValue2 = HashAlg.getHash("test.txt", BCProvider, "MD5");
+		// sha1
+		byte[] sha1 = HashAlg.getSHA1("test.txt", "SHA-1");
+		
+		Util.printHex(mdValue, "SHA-256");
+		Util.printHex(mdValue2, "MD5");
+		Util.printHex(sha1, "SHA-1");
+
+		byte[] mdValue3 = HashAlg.getHash("This is a secret message".getBytes(), BCProvider, "SHA-256");
+
+		Util.printHex(mdValue3, "SHA-256");
+
+		// MAC
+		byte[] macValue = HashMACFunction.getHashMAC("message.txt", "password".getBytes(), BCProvider, "HmacSHA1");
+		Util.printHex(macValue, "HmacSHA1");
+
+		// PBKDF2
+		PBKDF2Function pbk = new PBKDF2Function(10000, 128, "PBKDF2WithHmacSHA1", BCProvider);
+		char[] userPassword = "123456".toCharArray();
+		byte[] salt = getRandomSalt(16);
+
+		long tStart = System.currentTimeMillis();
+
+		byte[] saltedHash = pbk.getHash(userPassword, salt);
+
+		long tFinal = System.currentTimeMillis();
+
+		Util.printHex(saltedHash, "PBKDF2WithHmacSHA1");
+		System.out.println("\nTime (ms) needed to hash the user password: " + (tFinal - tStart));
+	}
+
+	public static byte[] getRandomSalt(int noBytes) throws NoSuchAlgorithmException {
+
+		byte[] randomSalt = new byte[noBytes];
+
+		SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+		random.nextBytes(randomSalt);
+
+		return randomSalt;
+	}
+
+	public static void testPBE()
+			throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, IOException, InvalidAlgorithmParameterException, InvalidKeySpecException {
+		System.out.println("Starging ...");
+
+		// DES = 64 bit; -> 64 bit block size
+		// AES = 128, 192, 256, 512 -> 128 bit block size
+		// 3DES = 3 x 64 bit keys = 192 bits -> 64 bit block size
+
+		// SymCipher.encryptECB(
+		// "Message.txt", "password12345678password", "Message.enc", "DESede");
+		// SymCipher.decryptECB(
+		// "Message.enc", "password12345678password", "Message2.txt", "DESede");
+
+		// ECB
+		AES_ECB_ENCRIPTION.encryptAES_ECB("PBE/Message.txt", "password", "PBE/Message.enc", "DES");
+		AES_ECB_DECRIPTION.decryptECB("PBE/Message.enc", "password", "PBE/Message2.txt", "DES");
+		// CBC
+		AES_CBC_ENCRIPTION.encryptCBC("PBE/Message.txt", "password12345678", "PBE/MessageCBC.enc", "AES");
+		AES_CBC_DECRIPTION.decryptCBC("PBE/MessageCBC.enc", "password12345678", "PBE/Message3.txt", "AES");
+
+		// 1 what do you do if the user password is not = with the block size
+		// 2 what do you do if the key is a string based on
+
+		// solution to extend/reduce passwords to required size
+		// solution to convert string based passwords to binary values
+		// PBE - password based encryption
+
+		PBESpecs pbeSpecs = PBE_ENCRIPTION.encryptPBE("PBE/Message.txt", "a", "PBE/MessagePBE.enc",
+				"PBEWithHmacSHA256AndAES_128");
+		PBE_DECRIPTION.decryptPBE("PBE/MessagePBE.enc", "a", "PBE/Message4.txt", "PBEWithHmacSHA256AndAES_128",
+				pbeSpecs);
+
+		System.out.println("That's it");
+	}
+
+	public static void testRSA() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException,
+			UnrecoverableKeyException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException,
+			BadPaddingException, SignatureException {
+		KeyStoreManager.list("ismkeystore.ks", "passks");
+
+		// get and print the public key for a keystore entry
+
+		KeyStore ks = KeyStoreManager.getKeyStore("ismkeystore.ks", "passks", "pkcs12");
+
+		PublicKey ism1Pub = KeyStoreManager.getPublicKey(ks, "ismkey1");
+		Util.printHex(ism1Pub.getEncoded(), "ISM1 Public key ");
+
+		PrivateKey ism1Priv = KeyStoreManager.getPrivateKey(ks, "ismkey1", "passks");
+		Util.printHex(ism1Priv.getEncoded(), "ISM1 Private key ");
+
+		PublicKey ism1PubCer = KeyStoreManager.getCertificateKey("ISMKey1CertificateX509.cer");
+		Util.printHex(ism1PubCer.getEncoded(), "ISM1 Public (from .cer file) key ");
+
+		byte[] randomAESKey = KeyStoreManager.generateRandomKey("AES", 128);
+		Util.printHex(randomAESKey, "A random generated AES key");
+
+		// encrypt with RSA the AES randomly generated key
+		// to provide security -> only the destination will be able to get the random
+		// key
+		// Enc_pub(random_key) - > Dec_priv(random_key)
+		byte[] encAESKey = KeyStoreManager.encryptRSA(ism1PubCer, randomAESKey);
+		Util.printHex(encAESKey, "Encrypted AES key ");
+
+		// decrypt
+		byte[] decAESKey = KeyStoreManager.decryptRSA(ism1Priv, encAESKey);
+		Util.printHex(decAESKey, "A random generated AES key");
+
+		// to provide authentication -> anyone can decrypt the message but they will all
+		// know it comes from you
+		// Enc_priv(message) -> Dec_pub(message)
+
+		byte[] message = "Hello !. How are you ?".getBytes();
+		byte[] encMessage = KeyStoreManager.encryptRSA(ism1Priv, message);
+		byte[] initialMessage = KeyStoreManager.decryptRSA(ism1Pub, encMessage);
+
+		System.out.println("\n" + new String(initialMessage));
+
+		// Digital Signatures
+		byte[] ds = KeyStoreManager.generateDigitalSignature("Message.txt", ism1Priv);
+		Util.printHex(ds, "Digital Signature value for Message.txt ");
+
+		// check the signature
+		if (KeyStoreManager.hasValidSignature("Message2.txt", ism1Pub, ds))
+			System.out.println("\nThe file is valid and is the original one");
+		else
+			System.out.println("\nVader changed the file. Don't trust it");
+
+		// check the signature with a different public key
+		PublicKey webPubKey = KeyStoreManager.getCertificateKey("ism_x509_certificate.cer");
+		if (KeyStoreManager.hasValidSignature("Message.txt", webPubKey, ds))
+			System.out.println("\nThe file is valid and is the original one");
+		else
+			System.out.println("\nVader changed the signature. The public key is for a different private one");
+	}
+
+	public static void testDES() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
+		String message = "Salut, sunt Armand!";
+		DES_ENCRIPTION.encryptDES(message);
+	}
+}
