@@ -1,0 +1,85 @@
+package eu.pregatire.pbe;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.security.AlgorithmParameters;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.util.concurrent.RecursiveAction;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import eu.pregatire.util.Util;
+
+public class PBE_DECRIPTION {
+	public static void decryptPBE(String inputFileName, String password, String outputFileName, String encAlgorithm,
+			PBESpecs pbeSpecs) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException,
+			InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException,
+			InvalidKeySpecException {
+
+		// managing files
+		File inputFile = new File(inputFileName);
+		if (!inputFile.exists()) {
+			System.out.println("---------- The file is not there -------");
+			throw new FileNotFoundException();
+		}
+		FileInputStream fis = new FileInputStream(inputFile);
+
+		File outputFile = new File(outputFileName);
+		if (!outputFile.exists()) {
+			outputFile.createNewFile();
+		}
+		FileOutputStream fos = new FileOutputStream(outputFile);
+
+		Cipher cipher = Cipher.getInstance(encAlgorithm);
+		int blockSize = cipher.getBlockSize();
+		
+		PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), 
+				pbeSpecs.getSalt(), pbeSpecs.getNoIterations(),
+				blockSize);
+		SecretKeyFactory keyFactory = 
+				SecretKeyFactory.getInstance(encAlgorithm);
+		Key key = keyFactory.generateSecret(keySpec);
+		
+		AlgorithmParameters algParams;
+		algParams = AlgorithmParameters.getInstance(encAlgorithm);
+		algParams.init(pbeSpecs.getParams());
+		
+		cipher.init(
+				Cipher.DECRYPT_MODE, key, algParams);
+
+
+		// decryption
+		byte[] input = new byte[blockSize];
+		byte[] output;
+		int noBytes = 0;
+
+		while ((noBytes = fis.read(input)) != -1) {
+			output = cipher.update(input, 0, noBytes);
+			fos.write(output);
+		}
+
+		output = cipher.doFinal();
+		fos.write(output);
+
+		fis.close();
+		fos.close();
+	}
+}
