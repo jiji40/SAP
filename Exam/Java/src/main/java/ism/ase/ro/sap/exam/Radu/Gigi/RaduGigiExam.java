@@ -1,4 +1,4 @@
-package ism.ase.ro.sap.exam.Vulpe.Monica;
+package ism.ase.ro.sap.exam.Radu.Gigi;
 
 import java.io.*;
 import java.security.*;
@@ -11,7 +11,7 @@ import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-public class VulpeMonicaExam {
+public class RaduGigiExam {
 
     // provided method for getting the public key from a X509 certificate file
     public static PublicKey getCertificateKey(String file) throws FileNotFoundException, CertificateException {
@@ -136,11 +136,7 @@ public class VulpeMonicaExam {
 
 
             /*
-             *
-             * @author - Vulpe Monica
-             *
-             *
-             *
+             * @author - Radu Gigi
              */
             /*
              * Request 1
@@ -151,7 +147,6 @@ public class VulpeMonicaExam {
 
 
             //check point - you should get 268F10........
-
 
             /*
              * Request 2
