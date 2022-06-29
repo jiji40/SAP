@@ -10,7 +10,6 @@ import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 public class RaduGigiExam {
-
     public static String byte2Hex(byte[] array) {
         String output = "";
         for(byte value : array) {
@@ -41,16 +40,16 @@ public class RaduGigiExam {
             FileOutputStream fos = new FileOutputStream(msg_enc);
             fis = new FileInputStream(msg);
 
-            Cipher c = Cipher.getInstance("AES/CBC/NoPadding");
+            Cipher c = Cipher.getInstance("AES/CBC/PKCS5Padding");
             int size = c.getBlockSize();
             byte[] IV = new byte[size];
             IV[5] = (byte) 0xCC;
-            System.out.println(byte2Hex(IV));
+            //System.out.println(byte2Hex(IV));
 
             byte[] key = "passwordsecurity".getBytes();
             SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
             IvParameterSpec ivSpec = new IvParameterSpec(IV);
-            c.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
+            c.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
 
             byte[] in = new byte[size];
             byte[] out;
@@ -65,14 +64,8 @@ public class RaduGigiExam {
             fis.close();
             fos.close();
 
-
-
-
-
-
-
-            return;
-           
+            // 3
+            File priv_key = new File("priv_key");
 
         } catch (Exception e) {
             e.printStackTrace();

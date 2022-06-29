@@ -1,0 +1,8 @@
+﻿  Exam.cpp
+D:\SrsBsns\ASE\ex\SAP\Exam\C\Exam\Exam\Exam.cpp(39,10): warning C4778: 'printf' : unterminated format string '%02h'
+D:\SrsBsns\ASE\ex\SAP\Exam\C\Exam\Exam\Exam.cpp(39,24): warning C4474: 'printf' : too many arguments passed for format string
+D:\SrsBsns\ASE\ex\SAP\Exam\C\Exam\Exam\Exam.cpp(39,24): message : placeholders and their parameters expect 0 variadic arguments, but 1 were provided
+D:\SrsBsns\ASE\ex\SAP\Exam\C\Exam\Exam\Exam.cpp(15,2): error C4996: 'SHA256_Init': Since OpenSSL 3.0
+D:\SrsBsns\ASE\ex\SAP\Exam\C\Exam\Exam\Exam.cpp(27,4): error C4996: 'SHA256_Update': Since OpenSSL 3.0
+D:\SrsBsns\ASE\ex\SAP\Exam\C\Exam\Exam\Exam.cpp(30,4): error C4996: 'SHA256_Update': Since OpenSSL 3.0
+D:\SrsBsns\ASE\ex\SAP\Exam\C\Exam\Exam\Exam.cpp(36,2): error C4996: 'SHA256_Final': Since OpenSSL 3.0

@@ -141,15 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AESCBCCipher.cpp" />
-    <ClCompile Include="Cipher.cpp" />
     <ClCompile Include="Exam.cpp" />
-    <ClCompile Include="RSACipher.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="AESCBCCipher.h" />
-    <ClInclude Include="Cipher.h" />
-    <ClInclude Include="RSACipher.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
